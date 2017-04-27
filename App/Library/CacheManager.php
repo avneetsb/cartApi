@@ -1,0 +1,67 @@
+<?php
+
+/**
+ * Class to handle all Cache Management functionality
+ */
+namespace App\Library;
+
+/**
+ * Class to handle all Cache Management functionality
+ *
+ * @package cartApi
+ * @author Avneet Singh Bindra <avneetbindra180691@gmail.com>
+ */
+class CacheManager
+{
+    /**
+     * Private variable, used to store Singleton Object of class
+     * @var Object
+     */
+    private static $class;
+    /**
+     * Private variable, used to store cache mappings
+     * @var Array
+     */
+    private $cacheMap;
+
+    /**
+     * Default constructor, used to initialize our cache map array
+     */
+    private function __construct()
+    {
+        $this->cacheMap = array();
+    }
+
+    /**
+     * Function to get Singleton instance of class
+     */
+    public static function getInstance()
+    {
+
+        if (self::$class == null) {
+            self::$class = new CacheManager();
+        }
+
+        return self::$class;
+    }
+
+    /**
+     * Function to set Cache values in cacheMap Array
+     * @param String $key Cache Key
+     * @param String $value Cache Value
+     */
+    public function set($key, $value)
+    {
+        $this->cacheMap[$key] = $value;
+    }
+
+    /**
+     * Function to get cache key's value
+     * @param String $key Cache Key name
+     */
+    public function get($key)
+    {
+        return isset($this->cacheMap[$key]) ? $this->cacheMap[$key] : null;
+    }
+
+}

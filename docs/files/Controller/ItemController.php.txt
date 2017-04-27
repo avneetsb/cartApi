@@ -1,0 +1,97 @@
+<?php
+
+/**
+ * Class to manage item actions
+ */
+namespace App\Controller;
+
+use App\Controller\BaseController;
+use App\Factory;
+use App\Model\ItemModel;
+
+/**
+ * Class to manage item actions
+ *
+ * @package cartApi
+ * @author Avneet Singh Bindra <avneetbindra180691@gmail.com>
+ */
+class ItemController extends BaseController
+{
+    /**
+     * Private caribale used to get Items in DB
+     * @var Object
+     */
+    private $itemsMap;
+
+    /**
+     * Default constructor, used to initialize item DB variable
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->itemsMap = Factory::getDatabaseFactory()->getItemMap();
+    }
+
+    /**
+     * Function to serach items in DB
+     */
+    public function searchItems()
+    {
+        $result = $this->itemsMap->getAllItems();
+        $this->responseOK(array('items' => $result));
+    }
+
+    /**
+     * Function to get item using ID
+     * @param Integer $itemId Item ID
+     */
+    public function getItemById($itemId = 0)
+    {
+        $result = $this->itemsMap->getItemById($itemId);
+        return $this->responseOK(array('item' => $result));
+    }
+
+    /**
+     * Function to create a new item in DB
+     */
+    public function createNewItem()
+    {
+        $itemModel = new ItemModel();
+        $itemModel->input($this->getRequest()->getAllPOST());
+        $error = $itemModel->validate();
+        if ($error) {
+            return $this->responseOK(array('error' => $error));
+        }
+
+        $response = $this->itemsMap->save($itemModel);
+        return $this->responseOK(array('item' => $response));
+    }
+
+    /**
+     * Function to update existing item in DB using its ID
+     * @param Integer $itemId Item ID
+     */
+    public function updateItem($itemId)
+    {
+        $itemModel = $this->itemsMap->getItemById($itemId);
+        $itemModel->input($this->getRequest()->getAllPOST());
+        $error = $itemModel->validate();
+        if ($error) {
+            return $this->responseOK(array('error' => $error));
+        }
+
+        $response = $this->itemsMap->save($itemModel);
+        $this->responseOK(array('item' => $response));
+    }
+
+    /**
+     * Function to delete item based on ID
+     * @param Integer $itemId Item ID
+     */
+    public function deleteItem($itemId)
+    {
+        $response = $this->itemsMap->deleteItemById($itemId);
+        $this->responseOK(array('status' => $response));
+    }
+}
+

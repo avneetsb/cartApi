@@ -1,0 +1,157 @@
+<?php
+
+/**
+ * Base Class to handle all Requests and their handling
+ */
+namespace App\Library;
+
+/**
+ * Base Class to handle all Requests and their handling
+ *
+ * @package cartApi
+ * @author Avneet Singh Bindra <avneetbindra180691@gmail.com>
+ */
+class Request
+{
+    /**
+     * Private variable, used to store get params
+     * @var Array
+     */
+    private $get;
+    /**
+     * Private variable, used to store post params
+     * @var Array
+     */
+    private $post;
+    /**
+     * Private variable, used to store method name
+     * @var String
+     */
+    private $method;
+    /**
+     * Private variable, used to store get params
+     * @var String
+     */
+    private $requestUri;
+    /**
+     * Private variable, used to store requestURI
+     * @var String
+     */
+    private $path;
+    /**
+     * Private variable, used to store pathname info
+     * @var String
+     */
+    private $params;
+    /**
+     * Private variable, used to store response statusCode
+     * @var Integer
+     */
+    private $statusCode;
+
+    /**
+     * Default constructor
+     * Handled GET/POST params and sets default response HTTP 1.1/ code
+     */
+    public function __construct()
+    {
+        $statusCode = 200;
+        $this->parseRoute();
+
+        $this->setGetParameters();
+        $this->setPostParameters();
+    }
+
+    /**
+     * Function to get all POST Parameters
+     */
+    public function getAllPOST()
+    {
+        return $this->post;
+    }
+
+    /**
+     * Function to get specific POST Parameter
+     * @param String POST Parameter Name
+     */
+    public function getPOST($key)
+    {
+        return isset($this->post[$key]) ? $this->post[$key] : null;
+    }
+
+    /**
+     * Function to set status code for Request
+     * @param Integer Response Code i.e. 404/500/200
+     */
+    public function setStatusCode($statusCode)
+    {
+        $this->statusCode = $statusCode;
+    }
+
+    /**
+     * Function to get current status code set
+     */
+    public function getStatusCode()
+    {
+        return $this->statusCode;
+    }
+
+    /**
+     * Function to get which route the Request needs to be forwarded to based on incoming
+     * Parh Param
+     */
+    public function parseRoute()
+    {
+        $this->requestUri = $_SERVER['REQUEST_URI'];
+        $this->method     = $_SERVER['REQUEST_METHOD'];
+
+        $parsedUrl  = parse_url($this->requestUri);
+        $this->path = $parsedUrl['path'];
+
+        $this->setParams();
+    }
+
+    /**
+     * Funciton which sets parameters based on incoming request Path
+     */
+    private function setParams()
+    {
+        preg_match('/(\/)([0-9]+)/', $this->path, $params);
+        if (count($params) > 2) {
+            $this->params = $params[2];
+        }
+    }
+
+    /**
+     * Function to get Params set via setParams function
+     */
+    public function getParams()
+    {
+        return $this->params;
+    }
+
+    /**
+     * Function to set GET parameters
+     */
+    public function setGetParameters()
+    {
+        $this->get = $_GET;
+    }
+
+    /**
+     * Function to set POST Parameters
+     */
+    public function setPostParameters()
+    {
+        $this->post = $_POST;
+    }
+
+    /**
+     * Function to get route based on setParams path variable
+     */
+    public function getRoute()
+    {
+        $path = preg_replace('/(\/)[0-9]+/', '/{id}', $this->path);
+        return $this->method . ":" . $path;
+    }
+}

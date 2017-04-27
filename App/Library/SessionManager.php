@@ -1,0 +1,97 @@
+<?php
+
+/**
+ * Class to handle all Session Management functionality
+ */
+namespace App\Library;
+
+/**
+ * Class to handle all Session Management functionality
+ *
+ * @package cartApi
+ * @author Avneet Singh Bindra <avneetbindra180691@gmail.com>
+ */
+class SessionManager
+{
+    /**
+     * Private variable, used to store Singleton Object of class
+     * @var Object
+     */
+    private static $class;
+    /**
+     * Private variable, used to store environment variable $_SESSION
+     * @var String
+     */
+    private $session;
+    /**
+     * Private variable, used to store session set in Configuration Manager
+     * @var String
+     */
+    private $config;
+    /**
+     * Private variable, used to store name of session
+     * @var String
+     */
+    private $name;
+
+    /**
+     * Default constructor, initializes session
+     * @param Object $configurationManager ConfigurationManagement
+     */
+    private function __construct($configurationManager)
+    {
+        session_start();
+        $this->config  = $configurationManager->get('session');
+        $this->name    = $this->config['name'];
+        $this->session = $this->getSession();
+    }
+
+    /**
+     * Function to check if session exists, else return empty
+     */
+    private function getSession()
+    {
+        return isset($_SESSION[$this->name]) ? json_decode($_SESSION[$this->name], true) : array();
+    }
+
+    /**
+     * Function to get instance of Class
+     * @param Object $configurationManager ConfigurationManagement
+     */
+    public static function getInstance($configurationManager)
+    {
+        if (self::$class == null) {
+            self::$class = new SessionManager($configurationManager);
+        }
+        return self::$class;
+    }
+
+    /**
+     * Function to get stored session by name
+     * @param String $name Session Name
+     */
+    public function get($name)
+    {
+        return isset($this->session[$name]) ? $this->session[$name] : null;
+    }
+
+    /**
+     * Function to set session name
+     * @param String $name Session Name
+     * @param String $value Sessioon Value
+     */
+    public function set($name, $value)
+    {
+        $this->session[$name] = $value;
+        return $this;
+    }
+
+    /**
+     * Function to manage sessions post script execution
+     */
+    public function __destruct()
+    {
+        $_SESSION[$this->name] = json_encode($this->session);
+    }
+
+}

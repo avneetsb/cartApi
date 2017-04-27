@@ -1,0 +1,206 @@
+<?php
+
+/**
+ * Class to actually execute DatabaseMapper Queries
+ */
+namespace App\DatabaseMapper;
+
+/**
+ * Using PHP PDO extension to execute queries and bindings
+ */
+use PDO;
+
+/**
+ * Class to actually execute DatabaseMapper Queries
+ *
+ * @package cartApi
+ * @author Avneet Singh Bindra <avneetbindra180691@gmail.com>
+ */
+class ObjectMap
+{
+    /**
+     * Protected varibale to store connection string
+     * @var Array
+     */
+    protected $connection;
+    /**
+     * Protected variable, used to store SQL Statement
+     * @var String
+     */
+    protected $sql;
+    /**
+     * Protected varible, used to store WHERE conditions
+     * @var String
+     */
+    protected $where;
+
+    /**
+     * Default constructor, used to create a new SQL Prepared Statement
+     * @param Array $connection MySQL Connection Array from config
+     */
+    public function __construct($connection)
+    {
+        $this->clearSQL();
+        $this->connection = $connection;
+    }
+
+    /**
+     * Function to fetch all details from table
+     */
+    protected function find()
+    {
+        $this->sql = "SELECT * FROM " . $this->table;
+        return $this;
+    }
+
+    /**
+     * Function to add WHERE clause conditions
+     * @param String $key Column Name
+     * @param String $value Column Value
+     */
+    protected function where($key, $value)
+    {
+        $this->sql .= (empty($this->where) ? " WHERE " : " AND ") . "$key = :$key";
+        $this->where[$key] = $value;
+        return $this;
+    }
+
+    /**
+     * Function to execute prepared statement and fetch single result
+     */
+    protected function get()
+    {
+        return $this->prepared()->fetch();
+    }
+
+    /**
+     * Function to execute prepared statement and fetch all results
+     */
+    protected function all()
+    {
+        return $this->prepared()->fetchAll();
+    }
+
+    /**
+     * Function to clear previous SQL Prepared Statement
+     */
+    private function clearSQL()
+    {
+        $this->sql   = null;
+        $this->where = array();
+    }
+
+    /**
+     * Function to prepare connection and Model Class for table
+     */
+    private function prepared()
+    {
+        $prepared = $this->connection->prepare($this->sql);
+        $this->bindParams($prepared);
+        $prepared->setFetchMode(PDO::FETCH_CLASS, $this->getModel());
+        $prepared->execute();
+        $this->clearSQL();
+        return $prepared;
+    }
+
+    /**
+     * Function to bind SQL Params
+     * @param Object $prepared PDO Object
+     */
+    private function bindParams($prepared)
+    {
+        foreach ($this->where as $key => $value) {
+            $prepared->bindValue(":$key", $value);
+        }
+    }
+
+    /**
+     * Function to update using Class Model
+     * @param Object $model Class Model Object
+     */
+    public function save($model)
+    {
+        if ($model->getPrimary() === null) {
+            $result = $this->createNew($model);
+            if ($result) {
+                $model->setPrimary($result);
+            }
+        } else {
+            $result = $this->update($model);
+        }
+        return $result ? $model : false;
+    }
+
+    /**
+     * Function to update using Class Model
+     * @param Object $model Class Model Object
+     */
+    private function createNew($model)
+    {
+        $columns     = implode(",", $model->getColumns());
+        $bindings    = $model->getBindings();
+        $bindingKeys = implode(",", array_keys($bindings));
+
+        $sql      = "insert into " . $this->table . " ($columns) values ($bindingKeys)";
+        $prepared = $this->connection->prepare($sql);
+        foreach ($bindings as $key => $value) {
+            $prepared->bindValue($key, $value);
+        }
+        $prepared->execute();
+        return $this->connection->lastInsertId();
+    }
+
+    /**
+     * Function to delete
+     */
+    public function delete()
+    {
+        $this->sql = "delete from " . $this->table . " " . $this->sql;
+        return $this->prepared()->rowCount() > 0;
+    }
+
+    /**
+     * Function to update using Class Model
+     * @param Object $model Class Model Object
+     */
+    private function update($model)
+    {
+        $primary  = $model->getPrimaryKey();
+        $bindings = $model->getBindings();
+
+        $sql      = "update " . $this->table . " set " . $this->updateQuery($bindings) . " where $primary = :$primary";
+        $prepared = $this->connection->prepare($sql);
+        foreach ($bindings as $key => $value) {
+            $prepared->bindValue($key, $value);
+        }
+        $prepared->bindValue($primary, $model->getPrimary());
+        $prepared->execute();
+        return $prepared->rowCount();
+    }
+
+    /**
+     * Function to generate update SQL Query based on bindings
+     * @param Array $bindings Array of Bindings for SQL Query
+     */
+    private function updateQuery($bindings)
+    {
+        $keys = array_keys($bindings);
+        $sql  = array();
+        foreach ($keys as $key) {
+            $sql[] = substr($key, 1) . " = $key";
+        }
+        return implode(", ", $sql);
+    }
+
+    /**
+     * Function to get model based on classname
+     */
+    private function getModel()
+    {
+        $className = get_class($this);
+        $onlyClass = substr($className, strrpos($className, '\\') + 1);
+        $modelName = str_replace('Map', 'Model', $onlyClass);
+        return "App\\Model\\$modelName";
+    }
+}
+

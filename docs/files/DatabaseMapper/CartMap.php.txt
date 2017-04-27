@@ -1,0 +1,55 @@
+<?php
+
+/**
+ * CartMap Class, used to handle the cart table
+ */
+namespace App\DatabaseMapper;
+
+/**
+ * CartMap Class, used to handle the cart table
+ *
+ * @package cartApi
+ * @author Avneet Singh Bindra <avneetbindra180691@gmail.com>
+ */
+class CartMap extends ObjectMap
+{
+    /**
+     * Protected variable, used to store static table name
+     * @var String
+     */
+    protected $table = 'cart';
+    /**
+     * Protected varible to store primary key column
+     * @var String
+     */
+    protected $primary = 'cartId';
+
+    /**
+     * Function to get Cart Items associated with user
+     * @param Integer $userId User's unique indetification number
+     */
+    public function getCartItemsByUserId($userId)
+    {
+        return $this->find()->where('userId', $userId)->all();
+    }
+
+    /**
+     * Function to delete item based in itemId and userId
+     * @param Integer $userId User ID
+     * @param Integer $itemId Item ID
+     */
+    public function removeCartItemsByUserId($userId, $itemId)
+    {
+        return $this->where('userId', $userId)->where('itemId', $itemId)->delete();
+    }
+
+    /**
+     * Function to delete all items for particular user
+     * @param Integer $userId User ID
+     */
+    public function clearCartItemsByUserId($userId)
+    {
+        return $this->where('userId', $userId)->delete();
+    }
+}
+

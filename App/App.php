@@ -1,0 +1,82 @@
+<?php
+
+/**
+ * Central Class, project instantiator
+ */
+
+namespace App;
+
+/**
+ * Uses Factory class to instantiate Base objects for Config/Route/Authentication
+ */
+use App\Factory;
+
+/**
+ * Main Class for executing our RESTful API's.
+ *
+ * @package cartApi
+ * @author Avneet Singh Bindra <avneetbindra180691@gmail.com>
+ */
+class App
+{
+    /**
+     * Private variable to hold configurationManager Object
+     * @var Object
+     */
+    private $configManager;
+    /**
+     * Private variable to hold routeManager Object
+     * @var Object
+     */
+    private $routeManager;
+    /**
+     * Private variable to hold authenticationManager Object
+     * @var Object
+     */
+    private $authManager;
+
+    /**
+     * Driver function to run api
+     * Loads configuration and route details
+     */
+    public function run()
+    {
+        $this->loadConfig();
+        $this->route();
+    }
+
+    /**
+     * Function to load configuration settings from App\Config folder
+     */
+    private function loadConfig()
+    {
+        $this->configManager = Factory::getConfigManager();
+        $this->configManager->load(__DIR__ . '/Config');
+
+        $this->routeManager = Factory::getRouteManager();
+
+        $this->authManager = Factory::getAuthManager();
+    }
+
+    /**
+     * Function to check for Authentication at top level using authenticationManager Object
+     */
+    private function checkAuthentication()
+    {
+        if (!$this->authManager->isUserLoggedIn()) {
+            $this->routeManager->routeToError(403);
+        }
+    }
+
+    /**
+     * Function to load a specific route based on incoming path query
+     * Also Handles cases if authentication is required
+     */
+    private function route()
+    {
+        if ($this->routeManager->needsAuth()) {
+            $this->checkAuthentication();
+        }
+        $route = $this->routeManager->route();
+    }
+}

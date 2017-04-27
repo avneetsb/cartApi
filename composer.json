@@ -1,0 +1,21 @@
+{
+    "name": "cartApi",
+    "description": "cartApi RESTful API Assignment",
+    "type": "project",
+    "require": {
+        "php": ">=5.4",
+        "phpdocumentor/phpdocumentor": "2.*"
+    },
+    "license": "",
+    "authors": [
+        {
+            "name": "Avneet Singh Bindra",
+            "email": "avneet.bindra@timesinternet.in"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "App\\": "App/"
+        }
+    }
+}

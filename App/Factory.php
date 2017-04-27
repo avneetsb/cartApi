@@ -1,0 +1,83 @@
+<?php
+
+/**
+ * Factory Design pattern used to instatiate Obejcts for our Route, Authentication, Database, Session
+ * Configuration and Session Management
+ * Except for Authentication, all objects are used in Singleton Design pattern
+ */
+namespace App;
+
+/**
+ * Importing Base classes from our project to instantiate Objects
+ */
+use App\DatabaseMapper\DatabaseFactory;
+use App\Library\AuthenticationManager;
+use App\Library\CacheManager;
+use App\Library\ConfigurationManager;
+use App\Library\RouteManager;
+use App\Library\SessionManager;
+
+/**
+ * Factory Class
+ *
+ * @package cartApi
+ * @author Avneet Singh Bindra <avneetbindra180691@gmail.com>
+ */
+class Factory
+{
+    /**
+     * Function to get instance of our Cache Manager
+     */
+    public static function getCacheManager()
+    {
+        return CacheManager::getInstance();
+    }
+
+    /**
+     * Function to get instance of our Configuration Manager
+     */
+    public static function getConfigManager()
+    {
+        return ConfigurationManager::getInstance();
+    }
+
+    /**
+     * Function to get instance of our Route Manager
+     */
+    public static function getRouteManager()
+    {
+        $configurationManager = self::getConfigManager();
+        return RouteManager::getInstance($configurationManager);
+    }
+
+    /**
+     * Function to get instance of our Authentication Manager
+     * This does not use singleton since its specific to per-user instance
+     */
+    public static function getAuthManager()
+    {
+        $cacheManager    = self::getCacheManager();
+        $sessionManager  = self::getSessionManager();
+        $databaseFactory = self::getDatabaseFactory();
+        return new AuthenticationManager($cacheManager, $sessionManager, $databaseFactory);
+    }
+
+    /**
+     * Function to get instance of our Session Manager
+     */
+    public static function getSessionManager()
+    {
+        $configurationManager = self::getConfigManager();
+        return SessionManager::getInstance($configurationManager);
+    }
+
+    /**
+     * Function to get instance of our Database Manager
+     */
+    public static function getDatabaseFactory()
+    {
+        $configurationManager = self::getConfigManager();
+        return DatabaseFactory::getInstance($configurationManager);
+    }
+
+}
